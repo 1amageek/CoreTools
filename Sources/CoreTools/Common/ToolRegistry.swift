@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 public struct ToolRegistry: Sendable {
     public static func phase1Tools(

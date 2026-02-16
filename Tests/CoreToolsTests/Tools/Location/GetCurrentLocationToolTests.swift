@@ -1,6 +1,5 @@
 import Testing
 import CoreLocation
-import OpenFoundationModels
 @testable import CoreTools
 
 @Suite("GetCurrentLocationTool Tests")

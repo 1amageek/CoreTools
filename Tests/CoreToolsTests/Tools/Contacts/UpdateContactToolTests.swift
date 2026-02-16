@@ -1,5 +1,4 @@
 import Testing
-import OpenFoundationModels
 @testable import CoreTools
 
 @Suite("UpdateContactTool Tests")

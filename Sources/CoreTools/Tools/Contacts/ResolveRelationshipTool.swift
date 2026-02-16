@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 public struct ResolveRelationshipTool: Tool {
     public let name = "contacts_resolve_relationship"

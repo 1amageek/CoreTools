@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 public struct SearchContactsTool: Tool {
     public let name = "contacts_search"

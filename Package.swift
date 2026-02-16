@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "CoreTools",
     platforms: [
-        .iOS(.v18),
-        .macOS(.v15),
+        .iOS(.v26),
+        .macOS(.v26),
     ],
     products: [
         .library(
@@ -19,6 +19,10 @@ let package = Package(
             targets: ["CoreUI"]
         ),
     ],
+    traits: [
+        .trait(name: "OpenFoundationModels"),
+        .default(enabledTraits: []),
+    ],
     dependencies: [
         .package(url: "https://github.com/1amageek/OpenFoundationModels.git", from: "1.3.0"),
     ],
@@ -26,7 +30,10 @@ let package = Package(
         .target(
             name: "CoreTools",
             dependencies: [
-                .product(name: "OpenFoundationModels", package: "OpenFoundationModels"),
+                .product(name: "OpenFoundationModels", package: "OpenFoundationModels", condition: .when(traits: ["OpenFoundationModels"])),
+            ],
+            swiftSettings: [
+                .define("OpenFoundationModels", .when(traits: ["OpenFoundationModels"])),
             ]
         ),
         .target(
@@ -37,7 +44,10 @@ let package = Package(
             name: "CoreToolsTests",
             dependencies: [
                 "CoreTools",
-                .product(name: "OpenFoundationModels", package: "OpenFoundationModels"),
+                .product(name: "OpenFoundationModels", package: "OpenFoundationModels", condition: .when(traits: ["OpenFoundationModels"])),
+            ],
+            swiftSettings: [
+                .define("OpenFoundationModels", .when(traits: ["OpenFoundationModels"])),
             ]
         ),
         .testTarget(

@@ -79,7 +79,7 @@ private enum LayoutPreviewFixtures {
             ui: CoreUIDocumentUI(
                 layout: layout,
                 views: [mapView, calendarView],
-                actions: [CoreUIAction(label: "閉じる", type: .dismiss)]
+                actions: []
             )
         )
     }

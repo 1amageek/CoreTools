@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 @Generable
 public struct ReverseGeocodeResult: Sendable {

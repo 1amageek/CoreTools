@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 public struct ScheduleTimeNotificationTool: Tool {
     public let name = "notification_schedule_time"

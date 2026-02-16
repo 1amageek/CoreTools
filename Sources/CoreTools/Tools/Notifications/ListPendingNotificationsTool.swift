@@ -1,4 +1,3 @@
-import OpenFoundationModels
 import Foundation
 
 public struct ListPendingNotificationsTool: Tool {

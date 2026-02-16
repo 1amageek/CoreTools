@@ -1,4 +1,3 @@
-import OpenFoundationModels
 import CoreLocation
 
 public struct StartRegionMonitoringTool: Tool {

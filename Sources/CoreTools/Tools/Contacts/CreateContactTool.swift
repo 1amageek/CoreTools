@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 public struct CreateContactTool: Tool {
     public let name = "contacts_create"

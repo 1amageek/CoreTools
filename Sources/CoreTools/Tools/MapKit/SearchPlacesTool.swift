@@ -1,4 +1,3 @@
-import OpenFoundationModels
 import MapKit
 
 public struct SearchPlacesTool: Tool {

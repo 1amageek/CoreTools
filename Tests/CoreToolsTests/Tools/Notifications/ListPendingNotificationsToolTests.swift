@@ -1,6 +1,5 @@
 import Testing
 import Foundation
-import OpenFoundationModels
 @testable import CoreTools
 
 @Suite("ListPendingNotificationsTool Tests")

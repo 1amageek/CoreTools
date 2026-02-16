@@ -1,4 +1,3 @@
-import OpenFoundationModels
 import MapKit
 import Foundation
 

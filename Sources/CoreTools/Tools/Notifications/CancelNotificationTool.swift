@@ -1,4 +1,3 @@
-import OpenFoundationModels
 
 public struct CancelNotificationTool: Tool {
     public let name = "notification_cancel"
