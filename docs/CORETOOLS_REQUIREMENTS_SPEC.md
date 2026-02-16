@@ -41,6 +41,12 @@ UI は `CoreTools` から分離し、`CoreUI` モジュールで提供する。
 
 依存方向は `CoreUI -> CoreTools` とし、逆依存を禁止する。
 
+## 2.2 CoreUI JSON 仕様
+
+CoreUI の LLM 出力 JSON 最小契約は以下の別紙を正とする。
+
+- `docs/COREUI_JSON_VIEW_FORMAT.md`
+
 ## 3. OpenFoundationModels 準拠の共通仕様
 
 ### 3.1 Tool 構造
@@ -441,6 +447,14 @@ UI は `CoreTools` から分離し、`CoreUI` モジュールで提供する。
   - 接続承認 UI
   - 送達状態表示
 
+#### 5.11.1 セッション開始ポリシー（必須）
+
+- Agent セッション開始時に `advertise` と `browse` を同時開始する。
+- 同時開始はブートストラップ時間（既定 `10〜20秒`）で運用し、接続成立後は片側を弱化または停止して電力消費を抑える。
+- 双方同時検出時の二重招待を防ぐため、`peerID` の辞書順など deterministic ルールで invite 側を一意決定する。
+- 未接続が継続する場合は scan 間隔を段階的に拡大する（バックオフ）。
+- セッション終了時は `advertise` / `browse` / 関連セッションを必ず停止する。
+
 ### 5.12 NearbyInteraction
 
 - 必須 API:
@@ -452,15 +466,24 @@ UI は `CoreTools` から分離し、`CoreUI` モジュールで提供する。
   - `NINearbyObject.distance`
   - `NINearbyObject.direction`
   - `NIDiscoveryToken`
-- Tool:
-  - `nearby_exchange_discovery_token`
-  - `nearby_start_session`
-  - `nearby_read_distance_direction`
-  - `nearby_stop_session`
+- 提供形態:
+  - `NearbyInteraction` は原則 Tool ではなく `NearbyHarness` として提供する。
+  - Harness は近接セッション管理と距離/方向の継続観測を担当し、Agent 実行コンテキストへ状態を供給する。
+  - `NIDiscoveryToken` 交換は `MultipeerConnectivity` 経由で行う。
+  - 任意で公開する Tool は `nearby_enable` / `nearby_disable` に限定する。
 - Generable UI:
   - レーダー表示
   - 距離/方角インジケータ
   - セッション状態表示
+
+#### 5.12.1 NearbyAdvisor（推奨）
+
+- `NearbyHarness` とは別に `NearbyAdvisor` を設け、観測結果から行動提案を生成する。
+- 主な提案:
+  - 送信対象候補の絞り込み（誤送信リスク低減）
+  - 最寄り中継端末の提案（メッシュ送達率向上）
+  - 近接成立条件の確認提案（対面共有の安全性向上）
+- Advisor は提案のみを行い、送信確定は必ず UI 確認を経る。
 
 ### 5.13 CoreSpotlight
 

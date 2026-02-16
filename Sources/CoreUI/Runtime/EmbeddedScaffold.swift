@@ -35,14 +35,6 @@ public struct EmbeddedScaffold<Content: View>: View {
                     }
                 }
                 Spacer()
-                if header.presentationHints.fullscreenAllowed {
-                    Button("全画面で開く") {
-                        Task {
-                            await presentationDriver.presentFullscreen(containerID: header.containerID)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                }
             }
 
             content

@@ -21,10 +21,12 @@ public struct ImagePreviewView: View {
                             .stroke(WatchPalette.outline, lineWidth: 1)
                     )
 
-                Text(payload.title)
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
+                if let title = payload.title {
+                    Text(title)
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                }
 
                 if let subtitle = payload.subtitle {
                     Text(subtitle)
@@ -78,7 +80,7 @@ public struct ImagePreviewView: View {
     @ViewBuilder
     private var imageBody: some View {
         if
-            let imageURL = payload.asset.imageURL,
+            let imageURL = payload.url,
             let url = URL(string: imageURL)
         {
             AsyncImage(url: url) { phase in
@@ -106,7 +108,7 @@ public struct ImagePreviewView: View {
         ZStack {
             Rectangle()
                 .fill(Color.white.opacity(0.06))
-            Image(systemName: payload.asset.placeholderSystemName)
+            Image(systemName: payload.placeholder ?? "photo")
                 .font(.system(size: 38, weight: .medium))
                 .foregroundStyle(WatchPalette.secondaryText)
         }
@@ -119,7 +121,8 @@ public struct ImagePreviewView: View {
 
         ImagePreviewView(
             payload: ImagePreviewPayload(
-                asset: ImageAssetPayload(imageURL: nil, placeholderSystemName: "photo.on.rectangle"),
+                url: nil,
+                placeholder: "photo.on.rectangle",
                 title: "共有前プレビュー",
                 subtitle: "位置情報付きで送信",
                 metadata: [

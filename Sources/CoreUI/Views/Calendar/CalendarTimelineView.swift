@@ -29,8 +29,8 @@ public struct CalendarTimelineView: View {
         let baseDate = startDate(for: sortedEvents.first ?? CalendarEventPayload(
             id: "fallback",
             title: "",
-            startISO8601: ISO8601DateFormatter().string(from: Date()),
-            endISO8601: ISO8601DateFormatter().string(from: Date())
+            start: ISO8601DateFormatter().string(from: Date()),
+            end: ISO8601DateFormatter().string(from: Date())
         )) ?? Date()
 
         guard
@@ -57,10 +57,14 @@ public struct CalendarTimelineView: View {
     private var calendarForPayload: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = Locale.current
-        if let timezone = TimeZone(identifier: payload.timezoneIdentifier) {
-            calendar.timeZone = timezone
+        if let timezone = timezoneIdentifier, let tz = TimeZone(identifier: timezone) {
+            calendar.timeZone = tz
         }
         return calendar
+    }
+
+    private var timezoneIdentifier: String? {
+        payload.timezone
     }
 
     private var nextEvent: CalendarEventPayload? {
@@ -155,8 +159,8 @@ public struct CalendarTimelineView: View {
         let baseDate = startDate(for: sortedEvents.first ?? CalendarEventPayload(
             id: "fallback",
             title: "",
-            startISO8601: ISO8601DateFormatter().string(from: Date()),
-            endISO8601: ISO8601DateFormatter().string(from: Date())
+            start: ISO8601DateFormatter().string(from: Date()),
+            end: ISO8601DateFormatter().string(from: Date())
         )) ?? Date()
 
         return formatter.string(from: baseDate)
@@ -185,7 +189,7 @@ public struct CalendarTimelineView: View {
 
             HStack(spacing: LayoutTokens.tiny) {
                 WatchChip(text: timeRangeText(for: event))
-                if event.isConflict {
+                if event.conflict {
                     WatchChip(text: "重複", tint: WatchPalette.warning.opacity(0.28))
                 }
             }
@@ -204,7 +208,7 @@ public struct CalendarTimelineView: View {
                 .frame(width: 40, alignment: .leading)
 
             Rectangle()
-                .fill(event.isConflict ? WatchPalette.warning : WatchPalette.accent)
+                .fill(event.conflict ? WatchPalette.warning : WatchPalette.accent)
                 .frame(width: 2, height: 28)
                 .clipShape(Capsule())
 
@@ -218,7 +222,7 @@ public struct CalendarTimelineView: View {
                         Label(location, systemImage: "mappin")
                             .lineLimit(1)
                     }
-                    if let travelMinutes = event.travelMinutes {
+                    if let travelMinutes = event.travelMin {
                         Text("移動 \(travelMinutes)分")
                     }
                 }
@@ -231,18 +235,18 @@ public struct CalendarTimelineView: View {
     }
 
     private var timezoneAbbreviation: String {
-        guard let timezone = TimeZone(identifier: payload.timezoneIdentifier) else {
+        guard let timezone = timezoneIdentifier, let tz = TimeZone(identifier: timezone) else {
             return "LOCAL"
         }
-        return timezone.abbreviation() ?? payload.timezoneIdentifier
+        return tz.abbreviation() ?? timezone
     }
 
     private func startDate(for event: CalendarEventPayload) -> Date? {
-        date(from: event.startISO8601)
+        date(from: event.start)
     }
 
     private func endDate(for event: CalendarEventPayload) -> Date? {
-        date(from: event.endISO8601)
+        date(from: event.end)
     }
 
     private func date(from text: String) -> Date? {
@@ -263,7 +267,7 @@ public struct CalendarTimelineView: View {
 
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
-        formatter.timeZone = TimeZone(identifier: payload.timezoneIdentifier)
+        formatter.timeZone = timezoneIdentifier.flatMap(TimeZone.init(identifier:))
         return formatter.string(from: start)
     }
 
@@ -275,8 +279,8 @@ public struct CalendarTimelineView: View {
         let formatter = DateIntervalFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
-        if let timezone = TimeZone(identifier: payload.timezoneIdentifier) {
-            formatter.timeZone = timezone
+        if let timezone = timezoneIdentifier, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
         }
         return formatter.string(from: start, to: end)
     }
@@ -311,34 +315,25 @@ public struct CalendarTimelineView: View {
 
         CalendarTimelineView(
             payload: CalendarTimelinePayload(
-                timezoneIdentifier: "Asia/Tokyo",
+                timezone: "Asia/Tokyo",
                 events: [
                     CalendarEventPayload(
                         id: "e1",
                         title: "保育園お迎え",
-                        startISO8601: "2026-02-16T17:00:00+09:00",
-                        endISO8601: "2026-02-16T17:30:00+09:00",
+                        start: "2026-02-16T17:00:00+09:00",
+                        end: "2026-02-16T17:30:00+09:00",
                         location: "中央保育園",
-                        travelMinutes: 20,
-                        isConflict: false
+                        travelMin: 20,
+                        conflict: false
                     ),
                     CalendarEventPayload(
                         id: "e2",
                         title: "オンライン会議",
-                        startISO8601: "2026-02-16T17:15:00+09:00",
-                        endISO8601: "2026-02-16T18:00:00+09:00",
+                        start: "2026-02-16T17:15:00+09:00",
+                        end: "2026-02-16T18:00:00+09:00",
                         location: nil,
-                        travelMinutes: nil,
-                        isConflict: true
-                    ),
-                    CalendarEventPayload(
-                        id: "e3",
-                        title: "買い物",
-                        startISO8601: "2026-02-16T19:00:00+09:00",
-                        endISO8601: "2026-02-16T19:40:00+09:00",
-                        location: "駅前",
-                        travelMinutes: 10,
-                        isConflict: false
+                        travelMin: nil,
+                        conflict: true
                     ),
                 ]
             )

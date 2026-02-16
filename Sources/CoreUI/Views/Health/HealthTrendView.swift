@@ -14,7 +14,7 @@ public struct HealthTrendView: View {
                 HStack(alignment: .firstTextBaseline) {
                     WatchSectionTitle(text: "Health")
                     Spacer()
-                    Text(payload.periodLabel)
+                    Text(payload.period ?? "")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(WatchPalette.secondaryText)
                 }
@@ -41,8 +41,8 @@ public struct HealthTrendView: View {
     }
 
     private func metricRow(_ metric: HealthMetricPayload) -> some View {
-        let isUp = metric.latestValue >= metric.previousValue
-        let delta = metric.latestValue - metric.previousValue
+        let isUp = metric.current >= metric.prev
+        let delta = metric.current - metric.prev
         let trendColor: Color = isUp ? .green : .orange
 
         return VStack(alignment: .leading, spacing: 5) {
@@ -53,7 +53,7 @@ public struct HealthTrendView: View {
 
                 Spacer()
 
-                Text(valueText(metric.latestValue, unit: metric.unit))
+                Text(valueText(metric.current, unit: metric.unit))
                     .font(.system(size: 16, weight: .heavy, design: .rounded))
                     .monospacedDigit()
 
@@ -64,7 +64,7 @@ public struct HealthTrendView: View {
             }
 
             Chart {
-                ForEach(Array(metric.sparkline.enumerated()), id: \.offset) { index, value in
+                ForEach(Array(metric.series.enumerated()), id: \.offset) { index, value in
                     LineMark(
                         x: .value("Index", index),
                         y: .value("Value", value)
@@ -127,34 +127,26 @@ public struct HealthTrendView: View {
 
         HealthTrendView(
             payload: HealthTrendPayload(
-                periodLabel: "過去7日",
+                period: "過去7日",
                 metrics: [
                     HealthMetricPayload(
                         id: "steps",
                         label: "歩数",
                         unit: "歩",
-                        latestValue: 8420,
-                        previousValue: 7100,
-                        sparkline: [5600, 6100, 6800, 7200, 7000, 7900, 8420]
+                        current: 8420,
+                        prev: 7100,
+                        series: [5600, 6100, 6800, 7200, 7000, 7900, 8420]
                     ),
                     HealthMetricPayload(
                         id: "heart",
                         label: "安静時心拍",
                         unit: "bpm",
-                        latestValue: 61,
-                        previousValue: 64,
-                        sparkline: [66, 65, 64, 64, 63, 62, 61]
-                    ),
-                    HealthMetricPayload(
-                        id: "sleep",
-                        label: "睡眠",
-                        unit: "h",
-                        latestValue: 5.8,
-                        previousValue: 6.4,
-                        sparkline: [6.8, 6.2, 6.0, 6.4, 6.1, 5.9, 5.8]
+                        current: 61,
+                        prev: 64,
+                        series: [66, 65, 64, 64, 63, 62, 61]
                     ),
                 ],
-                alerts: ["睡眠時間が平日平均より短い", "夕方の活動量が不足"]
+                alerts: ["睡眠時間が平日平均より短い"]
             )
         )
         .padding(LayoutTokens.compact)
