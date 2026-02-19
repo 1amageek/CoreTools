@@ -96,7 +96,7 @@ public struct CalendarTimelineView: View {
                     }
                 }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -114,12 +114,12 @@ public struct CalendarTimelineView: View {
     private var monthOverview: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(monthTitle)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .font(.system(size: 13, weight: .bold, design: .rounded))
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
-                ForEach(weekdaySymbols, id: \.self) { symbol in
+                ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
                     Text(symbol)
-                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(WatchPalette.secondaryText)
                         .frame(maxWidth: .infinity)
                 }
@@ -128,9 +128,9 @@ public struct CalendarTimelineView: View {
                     if let date {
                         let day = calendarForPayload.component(.day, from: date)
                         Text("\(day)")
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 2)
+                            .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
                                     .fill(
@@ -141,7 +141,7 @@ public struct CalendarTimelineView: View {
                             )
                     } else {
                         Color.clear
-                            .frame(height: 14)
+                            .frame(height: 16)
                     }
                 }
             }
