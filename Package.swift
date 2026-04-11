@@ -24,7 +24,7 @@ let package = Package(
         .default(enabledTraits: []),
     ],
     dependencies: [
-        .package(url: "https://github.com/1amageek/OpenFoundationModels.git", from: "1.16.0"),
+        .package(url: "https://github.com/1amageek/OpenFoundationModels.git", from: "1.17.0"),
     ],
     targets: [
         .target(
