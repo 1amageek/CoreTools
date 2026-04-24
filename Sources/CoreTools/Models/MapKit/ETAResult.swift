@@ -1,6 +1,6 @@
 
 @Generable
-public struct ETAResult: Sendable {
+public struct ETAResult: Sendable, PromptRepresentable {
     @Guide(description: "Estimated travel time in seconds")
     public var travelTime: Double
 

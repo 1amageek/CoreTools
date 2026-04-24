@@ -2,7 +2,17 @@ import CoreLocation
 
 public struct GetCurrentLocationTool: Tool {
     public let name = "location_get_current"
-    public let description = "Get the current device location including coordinates, altitude, and address"
+    public let description = """
+        Get the current device location including coordinates, altitude, and address.
+
+        ALWAYS call this tool when the user asks where they are, their current location, or anything about nearby surroundings.
+
+        Usage:
+        - Returns latitude, longitude, altitude, horizontal accuracy, and a reverse-geocoded address
+        - The result coordinates are suitable for displaying map visualization
+        - Accuracy depends on device hardware and environment; check the accuracy field
+        - Use location_geocode or location_reverse_geocode for address-to-coordinate conversions instead
+        """
 
     @Generable
     public struct Arguments: Sendable {}
@@ -35,4 +45,8 @@ public struct GetCurrentLocationTool: Tool {
             message: "Current location retrieved successfully"
         )
     }
+}
+
+extension GetCurrentLocationTool: ToolIconProviding {
+    public var iconSystemName: String { "location.fill" }
 }

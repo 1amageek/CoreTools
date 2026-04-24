@@ -155,7 +155,6 @@ public struct MapRouteView: View {
                     }
                 }
             }
-            .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

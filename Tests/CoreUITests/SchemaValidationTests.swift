@@ -71,11 +71,11 @@ import Testing
     }
 }
 
-@Test func documentRequiresVersion11() async throws {
+@Test func documentRequiresCoreUI1Schema() async throws {
     let decoder = SchemaDecoder()
     let documentJSON = """
     {
-      "schemaVersion": "1.0",
+      "schema": "coreui/0",
       "message": "hello"
     }
     """
@@ -84,7 +84,7 @@ import Testing
         _ = try decoder.decodeDocument(from: documentJSON)
         #expect(Bool(false))
     } catch let error as SchemaError {
-        #expect(error == .unsupportedSchemaVersion("1.0"))
+        #expect(error == .unsupportedSchemaVersion("coreui/0"))
     }
 }
 
@@ -92,7 +92,7 @@ import Testing
     let decoder = SchemaDecoder()
     let documentJSON = """
     {
-      "schemaVersion": "1.1",
+      "schema": "coreui/1",
       "message": "text only"
     }
     """
@@ -105,54 +105,80 @@ import Testing
     }
 }
 
-@Test func multiViewDocumentIsDecoded() async throws {
+@Test func semanticTreeDocumentIsDecoded() async throws {
     let decoder = SchemaDecoder()
     let documentJSON = """
     {
-      "schemaVersion": "1.1",
+      "schema": "coreui/1",
       "message": "map + calendar",
+      "context": {
+        "locale": "ja-JP",
+        "timezone": "Asia/Tokyo"
+      },
       "ui": {
-        "layout": "v",
-        "views": [
-          {
-            "kind": "map",
-            "payload": {
-              "center": { "lat": 35.68, "lng": 139.76 },
-              "pins": [
-                {
-                  "id": "me",
-                  "title": "現在地",
-                  "coord": { "lat": 35.68, "lng": 139.76 }
+        "body": {
+          "vstack": {
+            "spacing": "compact",
+            "content": [
+              {
+                "view": {
+                  "id": "map",
+                  "type": "map.snapshot",
+                  "state": "content",
+                  "data": {
+                    "center": { "lat": 35.68, "lng": 139.76 },
+                    "pins": [
+                      {
+                        "id": "me",
+                        "title": "現在地",
+                        "coord": { "lat": 35.68, "lng": 139.76 }
+                      }
+                    ]
+                  }
                 }
-              ]
-            }
-          },
-          {
-            "kind": "calendar",
-            "payload": {
-              "timezone": "Asia/Tokyo",
-              "events": [
-                {
-                  "title": "通院",
-                  "start": "2026-02-17T16:40:00+09:00",
-                  "end": "2026-02-17T17:10:00+09:00",
-                  "conflict": false
+              },
+              {
+                "section": {
+                  "title": "Schedule",
+                  "content": [
+                    {
+                      "view": {
+                        "id": "calendar",
+                        "type": "calendar.timeline",
+                        "state": "content",
+                        "data": {
+                          "timezone": "Asia/Tokyo",
+                          "events": [
+                            {
+                              "title": "通院",
+                              "start": "2026-02-17T16:40:00+09:00",
+                              "end": "2026-02-17T17:10:00+09:00",
+                              "conflict": false
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
                 }
-              ]
-            }
+              }
+            ]
           }
-        ]
+        }
       }
     }
     """
 
     let doc = try decoder.decodeDocument(from: documentJSON)
 
-    #expect(doc.ui?.views.count == 2)
+    #expect(doc.schema == "coreui/1")
+    #expect(doc.context?.timezone == "Asia/Tokyo")
     if let ui = doc.ui {
-        #expect(ui.layout == .vertical)
-        #expect(ui.views[0].kind == .map)
-        #expect(ui.views[1].kind == .calendar)
+        #expect(ui.leafViews.count == 2)
+        #expect(ui.leafViews[0].type == .mapSnapshot)
+        #expect(ui.leafViews[1].type == .calendarTimeline)
+    } else {
+        #expect(Bool(false))
     }
 }
 
@@ -160,13 +186,15 @@ import Testing
     let decoder = SchemaDecoder()
     let documentJSON = """
     {
-      "schemaVersion": "1.1",
+      "schema": "coreui/1",
       "message": "route",
       "ui": {
-        "views": [
-          {
-            "kind": "map",
-            "payload": {
+        "body": {
+          "view": {
+            "id": "route",
+            "type": "map.route",
+            "state": "content",
+            "data": {
               "path": [
                 { "lat": 35.68, "lng": 139.76 },
                 { "lat": 35.69, "lng": 139.75 }
@@ -190,7 +218,7 @@ import Testing
               ]
             }
           }
-        ]
+        }
       }
     }
     """
@@ -198,8 +226,8 @@ import Testing
     let doc = try decoder.decodeDocument(from: documentJSON)
 
     if let ui = doc.ui {
-        #expect(ui.views.count == 1)
-        switch ui.views[0].payload {
+        #expect(ui.leafViews.count == 1)
+        switch ui.leafViews[0].data {
         case .mapRoute:
             #expect(Bool(true))
         default:
@@ -210,27 +238,39 @@ import Testing
     }
 }
 
-@Test func brokenViewFallsBackToSchemaError() async throws {
+@Test func brokenViewFallsBackToSystemError() async throws {
     let decoder = SchemaDecoder()
     let documentJSON = """
     {
-      "schemaVersion": "1.1",
+      "schema": "coreui/1",
       "message": "partial failure",
       "ui": {
-        "views": [
-          {
-            "kind": "map",
-            "payload": {
-              "summary": ["invalid because center is missing"]
-            }
-          },
-          {
-            "kind": "loading",
-            "payload": {
-              "message": "loading..."
-            }
+        "body": {
+          "vstack": {
+            "content": [
+              {
+                "view": {
+                  "id": "map",
+                  "type": "map.snapshot",
+                  "state": "content",
+                  "data": {
+                    "summary": ["invalid because center is missing"]
+                  }
+                }
+              },
+              {
+                "view": {
+                  "id": "loading",
+                  "type": "system.loading",
+                  "state": "loading",
+                  "data": {
+                    "message": "loading..."
+                  }
+                }
+              }
+            ]
           }
-        ]
+        }
       }
     }
     """
@@ -238,18 +278,18 @@ import Testing
     let doc = try decoder.decodeDocument(from: documentJSON)
 
     if let ui = doc.ui {
-        #expect(ui.views.count == 2)
+        #expect(ui.leafViews.count == 2)
 
-        switch ui.views[0].payload {
+        switch ui.leafViews[0].data {
         case .schemaError:
-            #expect(Bool(true))
+            #expect(ui.leafViews[0].type == .systemError)
         default:
             #expect(Bool(false))
         }
 
-        switch ui.views[1].payload {
+        switch ui.leafViews[1].data {
         case .loadingState:
-            #expect(Bool(true))
+            #expect(ui.leafViews[1].type == .systemLoading)
         default:
             #expect(Bool(false))
         }

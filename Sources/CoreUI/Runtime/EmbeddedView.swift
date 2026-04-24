@@ -82,66 +82,79 @@ public struct EmbeddedView: View {
         self.registry = registry
     }
 
+    @State private var containerHeight: CGFloat = 0
+
     public var body: some View {
-        GeometryReader { proxy in
-            let document = decodeDocument()
-            let availableHeight = max(proxy.size.height, 1)
+        let document = decodeDocument()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: LayoutTokens.compact) {
-                    Text(document.message)
-                        .font(.body)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    if let ui = document.ui {
-                        layoutedViews(ui)
-
-                        if ui.actions.contains(where: { $0.type != .fullscreen }) {
-                            actionBar(actions: ui.actions, scopeID: "ui")
-                        }
+        VStack(alignment: .leading, spacing: LayoutTokens.compact) {
+            if let ui = document.ui {
+                renderNode(ui.body)
+            } else {
+                Text(document.message)
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            GeometryReader { contentProxy in
+                Color.clear
+                    .onAppear {
+                        self.renderedHeight = contentProxy.size.height
+                        self.evaluateEscalation(document: document, availableHeight: containerHeight)
                     }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(LayoutTokens.compact)
-                .background(
-                    GeometryReader { contentProxy in
-                        Color.clear
-                            .onAppear {
-                                self.renderedHeight = contentProxy.size.height
-                                self.evaluateEscalation(document: document, availableHeight: availableHeight)
-                            }
-                            .onChange(of: contentProxy.size.height) { _, newValue in
-                                self.renderedHeight = newValue
-                                self.evaluateEscalation(document: document, availableHeight: availableHeight)
-                            }
+                    .onChange(of: contentProxy.size.height) { _, newValue in
+                        self.renderedHeight = newValue
+                        self.evaluateEscalation(document: document, availableHeight: containerHeight)
                     }
-                )
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .onChange(of: proxy.size) { _, newSize in
-                let newAvailableHeight = max(newSize.height, 1)
-                self.evaluateEscalation(document: document, availableHeight: newAvailableHeight)
-            }
-            .onChange(of: dynamicTypeSize) { _, _ in
-                self.evaluateEscalation(document: document, availableHeight: availableHeight)
-            }
+        )
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.height
+        } action: { newValue in
+            containerHeight = newValue
+            evaluateEscalation(document: document, availableHeight: newValue)
+        }
+        .onChange(of: dynamicTypeSize) { _, _ in
+            self.evaluateEscalation(document: document, availableHeight: containerHeight)
         }
     }
 
-    @ViewBuilder
-    private func layoutedViews(_ ui: CoreUIDocumentUI) -> some View {
-        if ui.layout == .horizontal {
-            HStack(alignment: .top, spacing: LayoutTokens.compact) {
-                ForEach(ui.views) { item in
-                    renderedView(item)
+    private func renderNode(_ node: CoreUINode) -> AnyView {
+        switch node {
+        case .vstack(let stack):
+            return AnyView(VStack(alignment: .leading, spacing: spacingValue(stack.spacing)) {
+                ForEach(Array(stack.content.enumerated()), id: \.offset) { _, child in
+                    renderNode(child)
                 }
-            }
-        } else {
-            VStack(alignment: .leading, spacing: LayoutTokens.compact) {
-                ForEach(ui.views) { item in
-                    renderedView(item)
+            })
+        case .hstack(let stack):
+            return AnyView(HStack(alignment: .top, spacing: spacingValue(stack.spacing)) {
+                ForEach(Array(stack.content.enumerated()), id: \.offset) { _, child in
+                    renderNode(child)
                 }
-            }
+            })
+        case .section(let section):
+            return AnyView(VStack(alignment: .leading, spacing: LayoutTokens.tiny) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(section.title)
+                        .font(.headline)
+                    if let subtitle = section.subtitle {
+                        Text(subtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(WatchPalette.secondaryText)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: LayoutTokens.compact) {
+                    ForEach(Array(section.content.enumerated()), id: \.offset) { _, child in
+                        renderNode(child)
+                    }
+                }
+            })
+        case .view(let item):
+            return AnyView(renderedView(item))
         }
     }
 
@@ -201,9 +214,14 @@ public struct EmbeddedView: View {
             Task {
                 await presentationDriver.dismissFullscreen(containerID: containerID)
             }
-        case .tool:
-            guard let name = action.name else {
-                actionStatusByViewID[scopeID] = "tool name is missing"
+        case .invoke:
+            guard let target = action.target else {
+                actionStatusByViewID[scopeID] = "action target is missing"
+                return
+            }
+
+            guard target.kind == "tool" else {
+                actionStatusByViewID[scopeID] = "unsupported action target: \(target.kind)"
                 return
             }
 
@@ -222,7 +240,7 @@ public struct EmbeddedView: View {
             let descriptor = UIActionDescriptor(
                 actionType: UIActionType.executeTool.rawValue,
                 actionID: scopeID,
-                toolName: name,
+                toolName: target.name,
                 argumentsJSON: argumentsJSON
             )
 
@@ -240,7 +258,7 @@ public struct EmbeddedView: View {
             return
         }
 
-        let merged = ui.views.map(\.payload.metrics)
+        let merged = ui.leafViews.map(\.payload.metrics)
         let hasMap = merged.contains { $0.hasMap }
         let listCount = merged.reduce(0) { $0 + $1.listCount }
         let formFieldCount = merged.reduce(0) { $0 + $1.formFieldCount }
@@ -285,8 +303,8 @@ public struct EmbeddedView: View {
     }
 
     private func escalationRevision(document: CoreUIDocument) -> String {
-        let viewCount = document.ui?.views.count ?? 0
-        return "\(document.schemaVersion)-\(viewCount)-\(document.message.count)"
+        let viewCount = document.ui?.leafViews.count ?? 0
+        return "\(document.schema)-\(viewCount)-\(document.message.count)"
     }
 
     private func decodeDocument() -> CoreUIDocument {
@@ -315,15 +333,16 @@ public struct EmbeddedView: View {
 
             let view = CoreUIViewItem(
                 id: "legacy-view-0",
-                kind: payload.kind,
-                payload: payload,
+                type: type(for: payload),
+                state: .content,
+                data: payload,
                 actions: []
             )
 
             return CoreUIDocument(
-                schemaVersion: "1.1",
+                schema: "coreui/1",
                 message: header.title,
-                ui: CoreUIDocumentUI(layout: .vertical, views: [view], actions: [])
+                ui: CoreUIDocumentUI(body: .view(view))
             )
         } catch {
             return fallbackDocument(reason: "Legacy schema decode failed: \(error)")
@@ -333,15 +352,54 @@ public struct EmbeddedView: View {
     private func fallbackDocument(reason: String) -> CoreUIDocument {
         let view = CoreUIViewItem(
             id: "schema-error",
-            kind: .schemaError,
-            payload: .schemaError(SchemaErrorPayload(reason: reason)),
+            type: .systemError,
+            state: .error,
+            data: .schemaError(SchemaErrorPayload(reason: reason)),
             actions: []
         )
 
         return CoreUIDocument(
-            schemaVersion: "1.1",
+            schema: "coreui/1",
             message: "表示エラー",
-            ui: CoreUIDocumentUI(layout: .vertical, views: [view], actions: [])
+            ui: CoreUIDocumentUI(body: .view(view))
         )
+    }
+
+    private func spacingValue(_ spacing: CoreUISpacing?) -> CGFloat {
+        switch spacing {
+        case .tight:
+            return LayoutTokens.tiny
+        case .compact:
+            return LayoutTokens.compact
+        case .regular:
+            return LayoutTokens.regular
+        case .spacious:
+            return LayoutTokens.spacious
+        case nil:
+            return LayoutTokens.compact
+        }
+    }
+
+    private func type(for payload: DecodedEmbeddedPayload) -> CoreUIViewType {
+        switch payload {
+        case .mapSnapshot:
+            return .mapSnapshot
+        case .mapRoute:
+            return .mapRoute
+        case .imagePreview:
+            return .imagePreview
+        case .imageGallery:
+            return .imageGallery
+        case .calendarTimeline:
+            return .calendarTimeline
+        case .healthTrend:
+            return .healthTrend
+        case .placeList:
+            return .placesList
+        case .schemaError:
+            return .systemError
+        case .loadingState:
+            return .systemLoading
+        }
     }
 }

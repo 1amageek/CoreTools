@@ -2,7 +2,18 @@ import CoreLocation
 
 public struct GeocodeTool: Tool {
     public let name = "location_geocode"
-    public let description = "Convert an address string to geographic coordinates"
+    public let description = """
+        Convert an address string to geographic coordinates.
+
+        ALWAYS call this tool when you need to convert an address or place name into latitude/longitude coordinates.
+
+        Usage:
+        - Provide a human-readable address (e.g., street address, city name, landmark)
+        - May return multiple matching locations for ambiguous addresses
+        - The result coordinates are suitable for displaying map visualization
+        - For the reverse operation (coordinates to address), use location_reverse_geocode instead
+        - The call will FAIL if the address cannot be resolved to any location
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -36,4 +47,8 @@ public struct GeocodeTool: Tool {
             message: "Found \(locations.count) location(s) for '\(arguments.address)'"
         )
     }
+}
+
+extension GeocodeTool: ToolIconProviding {
+    public var iconSystemName: String { "location.fill" }
 }

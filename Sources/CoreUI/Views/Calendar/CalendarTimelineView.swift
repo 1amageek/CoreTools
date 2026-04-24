@@ -91,8 +91,12 @@ public struct CalendarTimelineView: View {
                 VStack(alignment: .leading, spacing: LayoutTokens.tiny) {
                     WatchSectionTitle(text: "Timeline")
 
-                    ForEach(sortedEvents) { event in
-                        timelineRow(for: event)
+                    if sortedEvents.isEmpty {
+                        EmptyCalendarView()
+                    } else {
+                        ForEach(sortedEvents) { event in
+                            timelineRow(for: event)
+                        }
                     }
                 }
             }
@@ -306,6 +310,28 @@ public struct CalendarTimelineView: View {
             return "\(hours)h"
         }
         return "\(hours)h\(remainMinutes)m"
+    }
+}
+
+private struct EmptyCalendarView: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: LayoutTokens.compact) {
+            Image(systemName: "calendar.badge.checkmark")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(WatchPalette.secondaryText)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("No events")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                Text("Your calendar is clear for this range.")
+                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .foregroundStyle(WatchPalette.secondaryText)
+            }
+        }
+        .padding(LayoutTokens.compact)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(WatchPalette.elevated)
+        .clipShape(RoundedRectangle(cornerRadius: LayoutTokens.cornerRadius))
     }
 }
 

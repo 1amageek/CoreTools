@@ -83,13 +83,11 @@ public struct MapSnapshotView: View {
                         .stroke(WatchPalette.outline, lineWidth: 1)
                 )
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: LayoutTokens.tiny) {
-                        WatchChip(text: "ETA \(etaText)", tint: WatchPalette.accent.opacity(0.22))
-                        WatchChip(text: distanceText)
-
-                        ForEach(payload.annotations) { annotation in
-                            WatchChip(text: annotation.title)
+                if payload.routeSummary != nil {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: LayoutTokens.tiny) {
+                            WatchChip(text: "ETA \(etaText)", tint: WatchPalette.accent.opacity(0.22))
+                            WatchChip(text: distanceText)
                         }
                     }
                 }
@@ -105,7 +103,6 @@ public struct MapSnapshotView: View {
                     }
                 }
             }
-            .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

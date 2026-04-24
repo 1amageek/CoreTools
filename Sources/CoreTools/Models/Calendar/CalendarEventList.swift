@@ -1,6 +1,6 @@
 
 @Generable
-public struct CalendarEventList: Sendable {
+public struct CalendarEventList: Sendable, PromptRepresentable {
     @Guide(description: "List of calendar events")
     public var events: [CalendarEventItem]
 

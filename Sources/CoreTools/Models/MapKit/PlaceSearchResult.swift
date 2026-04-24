@@ -1,6 +1,6 @@
 
 @Generable
-public struct PlaceSearchResult: Sendable {
+public struct PlaceSearchResult: Sendable, PromptRepresentable {
     @Guide(description: "List of found places")
     public var places: [PlaceItem]
 

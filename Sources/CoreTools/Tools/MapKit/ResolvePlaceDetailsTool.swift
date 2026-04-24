@@ -2,7 +2,17 @@ import MapKit
 
 public struct ResolvePlaceDetailsTool: Tool {
     public let name = "map_resolve_place_details"
-    public let description = "Get detailed information about a specific place"
+    public let description = """
+        Retrieve detailed information about a single place by name.
+
+        ALWAYS call this tool when the user asks about a specific named place, landmark, or station.
+
+        Usage:
+        - Provide a specific place name or query (e.g., "Tokyo Skytree", "Shibuya Station")
+        - Returns name, address, phone number, URL, category, and coordinates
+        - The result coordinates are suitable for displaying as a pin map visualization
+        - For searching multiple places by keyword or category, use map_search_places instead
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -34,4 +44,8 @@ public struct ResolvePlaceDetailsTool: Tool {
             message: "Place details resolved for '\(arguments.query)'"
         )
     }
+}
+
+extension ResolvePlaceDetailsTool: ToolIconProviding {
+    public var iconSystemName: String { "map.fill" }
 }

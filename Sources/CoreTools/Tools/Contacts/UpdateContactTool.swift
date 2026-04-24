@@ -1,7 +1,18 @@
 
 public struct UpdateContactTool: Tool {
     public let name = "contacts_update"
-    public let description = "Update an existing contact"
+    public let description = """
+        Update an existing contact's name fields.
+
+        IMPORTANT: This tool modifies the user's real contact store. The consent parameter MUST be true.
+
+        Usage:
+        - The identifier MUST be obtained from contacts_search first
+        - Only provided fields are updated; omitted fields remain unchanged
+        - Currently supports updating givenName and familyName only
+        - ALWAYS confirm with the user before updating a contact
+        - The call will FAIL if the identifier does not match any contact
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -41,4 +52,8 @@ public struct UpdateContactTool: Tool {
             message: "Contact '\(arguments.identifier)' updated"
         )
     }
+}
+
+extension UpdateContactTool: ToolIconProviding {
+    public var iconSystemName: String { "person.crop.circle.fill" }
 }

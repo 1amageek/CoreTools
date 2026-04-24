@@ -2,7 +2,18 @@ import CoreLocation
 
 public struct StartRegionMonitoringTool: Tool {
     public let name = "location_start_region_monitoring"
-    public let description = "Start monitoring a geographic region for entry and exit events"
+    public let description = """
+        Start monitoring a geographic region for entry and exit events.
+
+        IMPORTANT: This tool enables persistent background location monitoring. The consent parameter MUST be true.
+
+        Usage:
+        - Define a circular region with center coordinates and radius in meters (1 to 100,000)
+        - The identifier must be unique; reusing an identifier replaces the existing region
+        - The monitored region can be displayed on a map view as a map radius circle
+        - Use location_stop_region_monitoring with the same identifier to stop monitoring
+        - ALWAYS confirm with the user before starting region monitoring
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -40,4 +51,8 @@ public struct StartRegionMonitoringTool: Tool {
             message: "Region monitoring started for '\(arguments.identifier)'"
         )
     }
+}
+
+extension StartRegionMonitoringTool: ToolIconProviding {
+    public var iconSystemName: String { "location.fill" }
 }

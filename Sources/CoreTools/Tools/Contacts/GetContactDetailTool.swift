@@ -1,7 +1,14 @@
 
 public struct GetContactDetailTool: Tool {
     public let name = "contacts_get_detail"
-    public let description = "Get detailed information about a specific contact"
+    public let description = """
+        Retrieve full details of a contact by identifier.
+
+        Usage:
+        - Returns phone numbers, email addresses, postal addresses, organization, and job title
+        - The identifier MUST be obtained from contacts_search or contacts_resolve_relationship first
+        - The call will FAIL if the identifier does not match any contact
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -31,4 +38,8 @@ public struct GetContactDetailTool: Tool {
             message: "Contact detail retrieved for \(record.givenName) \(record.familyName)"
         )
     }
+}
+
+extension GetContactDetailTool: ToolIconProviding {
+    public var iconSystemName: String { "person.crop.circle.fill" }
 }

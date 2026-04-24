@@ -1,7 +1,19 @@
 
 public struct ScheduleCalendarNotificationTool: Tool {
     public let name = "notification_schedule_calendar"
-    public let description = "Schedule a notification at a specific calendar date and time"
+    public let description = """
+        Schedule a notification at a specific calendar date and time.
+
+        ALWAYS call this tool when the user asks to be reminded at a specific time or date (e.g., "at 3pm", "tomorrow morning").
+
+        Usage:
+        - Specify date components: year, month, day, hour, minute — all are optional
+        - Omitted components act as wildcards (e.g., hour=9, minute=0 fires daily at 9:00)
+        - The identifier must be unique; reusing an identifier replaces the existing notification
+        - The consent parameter MUST be true
+        - For scheduling after a delay (e.g., "in 5 minutes"), use notification_schedule_time instead
+        - Use notification_list_pending to verify the notification was scheduled
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -67,4 +79,8 @@ public struct ScheduleCalendarNotificationTool: Tool {
             message: "Calendar notification '\(arguments.title)' scheduled"
         )
     }
+}
+
+extension ScheduleCalendarNotificationTool: ToolIconProviding {
+    public var iconSystemName: String { "bell.fill" }
 }

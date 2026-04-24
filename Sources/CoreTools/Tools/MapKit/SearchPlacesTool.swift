@@ -2,7 +2,18 @@ import MapKit
 
 public struct SearchPlacesTool: Tool {
     public let name = "map_search_places"
-    public let description = "Search for places of interest by keyword or category"
+    public let description = """
+        Search for places of interest by keyword or category.
+
+        ALWAYS call this tool when the user asks to find nearby places, restaurants, shops, or searches for a type of place.
+
+        Usage:
+        - Provide a search query (e.g., "coffee shops", "gas station", "Tokyo Tower")
+        - Optionally provide center coordinates to bias results toward a specific area
+        - Returns a list of places with name, coordinates, address, phone, and category
+        - The result coordinates are suitable for displaying as pins map visualization
+        - For detailed information about a single known place, use map_resolve_place_details instead
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -52,4 +63,8 @@ public struct SearchPlacesTool: Tool {
             message: "Found \(places.count) place(s) for '\(arguments.query)'"
         )
     }
+}
+
+extension SearchPlacesTool: ToolIconProviding {
+    public var iconSystemName: String { "map.fill" }
 }

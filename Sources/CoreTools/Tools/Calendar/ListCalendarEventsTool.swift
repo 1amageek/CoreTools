@@ -75,3 +75,7 @@ public struct ListCalendarEventsTool: Tool {
         return nil
     }
 }
+
+extension ListCalendarEventsTool: ToolIconProviding {
+    public var iconSystemName: String { "calendar" }
+}

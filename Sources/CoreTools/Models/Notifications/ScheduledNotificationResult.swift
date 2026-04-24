@@ -1,6 +1,6 @@
 
 @Generable
-public struct ScheduledNotificationResult: Sendable {
+public struct ScheduledNotificationResult: Sendable, PromptRepresentable {
     @Guide(description: "Identifier of the scheduled notification")
     public var identifier: String
 

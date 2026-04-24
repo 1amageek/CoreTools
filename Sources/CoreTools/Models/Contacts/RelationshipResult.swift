@@ -18,7 +18,7 @@ public struct RelationshipMatch: Sendable {
 }
 
 @Generable
-public struct RelationshipResult: Sendable {
+public struct RelationshipResult: Sendable, PromptRepresentable {
     @Guide(description: "Matching contacts with relationship info")
     public var matches: [RelationshipMatch]
 

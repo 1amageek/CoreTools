@@ -1,6 +1,6 @@
 
 @Generable
-public struct RegionMonitoringResult: Sendable {
+public struct RegionMonitoringResult: Sendable, PromptRepresentable {
     @Guide(description: "Identifier of the monitored region")
     public var regionIdentifier: String
 

@@ -12,10 +12,14 @@ public struct ScreenRegistry {
             return AnyView(MapRouteView(payload: value))
         case .imagePreview(let value):
             return AnyView(ImagePreviewView(payload: value))
+        case .imageGallery(let value):
+            return AnyView(ImageGalleryView(payload: value))
         case .calendarTimeline(let value):
             return AnyView(CalendarTimelineView(payload: value))
         case .healthTrend(let value):
             return AnyView(HealthTrendView(payload: value))
+        case .placeList(let value):
+            return AnyView(PlaceListView(payload: value))
         case .schemaError(let value):
             return AnyView(SchemaErrorView(payload: value))
         case .loadingState(let value):

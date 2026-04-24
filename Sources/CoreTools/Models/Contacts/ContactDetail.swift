@@ -1,6 +1,6 @@
 
 @Generable
-public struct ContactDetail: Sendable {
+public struct ContactDetail: Sendable, PromptRepresentable {
     @Guide(description: "Unique identifier of the contact")
     public var identifier: String
 

@@ -1,6 +1,6 @@
 
 @Generable
-public struct ReverseGeocodeResult: Sendable {
+public struct ReverseGeocodeResult: Sendable, PromptRepresentable {
     @Guide(description: "Full formatted address")
     public var address: String
 

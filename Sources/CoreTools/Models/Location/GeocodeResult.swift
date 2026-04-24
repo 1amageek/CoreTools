@@ -14,7 +14,7 @@ public struct GeocodeLocation: Sendable {
 }
 
 @Generable
-public struct GeocodeResult: Sendable {
+public struct GeocodeResult: Sendable, PromptRepresentable {
     @Guide(description: "List of geocoded locations")
     public var locations: [GeocodeLocation]
 

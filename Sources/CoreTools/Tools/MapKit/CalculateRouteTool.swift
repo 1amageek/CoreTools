@@ -2,7 +2,19 @@ import MapKit
 
 public struct CalculateRouteTool: Tool {
     public let name = "map_calculate_route"
-    public let description = "Calculate a route between two locations with turn-by-turn directions"
+    public let description = """
+        Calculate a route between two locations with turn-by-turn directions.
+
+        ALWAYS call this tool when the user asks for directions or how to get from one place to another.
+
+        Usage:
+        - Provide origin and destination as latitude/longitude coordinate pairs
+        - Specify transportType: "automobile", "walking", or "transit"
+        - Returns step-by-step instructions, total distance in meters, and travel time in seconds
+        - The route is suitable for displaying as an overlay map visualization
+        - For travel time only (without directions), use map_estimate_eta instead — it is faster
+        - Use location_geocode to convert addresses to coordinates before calling this tool
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -66,4 +78,8 @@ public struct CalculateRouteTool: Tool {
         }
         return "\(minutes) min"
     }
+}
+
+extension CalculateRouteTool: ToolIconProviding {
+    public var iconSystemName: String { "map.fill" }
 }

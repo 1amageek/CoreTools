@@ -2,7 +2,17 @@ import Foundation
 
 public struct ListPendingNotificationsTool: Tool {
     public let name = "notification_list_pending"
-    public let description = "List all pending scheduled notifications"
+    public let description = """
+        List all pending scheduled notifications.
+
+        ALWAYS call this tool when the user asks about their reminders, scheduled notifications, or what's pending.
+
+        Usage:
+        - Returns all notifications that have been scheduled but not yet delivered
+        - Each item includes identifier, title, body, and next trigger date in ISO 8601 format
+        - ALWAYS use this tool before notification_cancel to obtain valid identifiers
+        - Returns an empty list if no notifications are pending
+        """
 
     @Generable
     public struct Arguments: Sendable {}
@@ -29,4 +39,8 @@ public struct ListPendingNotificationsTool: Tool {
             message: "\(items.count) pending notification(s)"
         )
     }
+}
+
+extension ListPendingNotificationsTool: ToolIconProviding {
+    public var iconSystemName: String { "bell.fill" }
 }

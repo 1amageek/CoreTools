@@ -1,6 +1,6 @@
 
 @Generable
-public struct PlaceDetail: Sendable {
+public struct PlaceDetail: Sendable, PromptRepresentable {
     @Guide(description: "Name of the place")
     public var name: String
 

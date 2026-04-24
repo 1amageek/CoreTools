@@ -47,6 +47,19 @@ CoreUI の LLM 出力 JSON 最小契約は以下の別紙を正とする。
 
 - `docs/COREUI_JSON_VIEW_FORMAT.md`
 
+## 2.3 UX 表示原則
+
+CoreTools の Tool 出力は、LLM が文章で説明するだけでなく、ユーザーが即座に確認・判断・再実行できる表示に変換しやすい形を優先する。
+
+- 結果が 0 件でも成功として扱い、空状態 UI を表示する。
+- 地図、予定、場所、画像のような視覚確認が有効な結果は CoreUI artifact を優先する。
+- `message` はユーザーに見せる短い結論、構造化フィールドは UI と再利用のための事実として分離する。
+- `view_validate` は UX 契約の gate として使い、壊れた UI をそのまま表示しない。
+- `view_format` はモデル出力を可能な限り修復し、修復不能な部分だけ `system.error` にフォールバックする。
+- CoreUI v1 は `schema: "coreui/1"` と `ui.body` の semantic tree を正とする。
+- コンテナは `vstack` / `hstack` / `section`、leaf は `view.type` / `view.state` / `view.data` で表現する。
+- 副作用を持つ操作は、Tool 実行前または UI action で確認導線を持つ。
+
 ## 3. OpenFoundationModels 準拠の共通仕様
 
 ### 3.1 Tool 構造
@@ -79,6 +92,23 @@ CoreUI の LLM 出力 JSON 最小契約は以下の別紙を正とする。
 - 副作用が大きい（通知送信、家電操作、データ共有）
 - 個人情報を扱う（健康、連絡先、写真）
 - 相手・端末の選択が必要（共有先、近接端末、BLE デバイス）
+
+### 3.5 View Document Tool（必須）
+
+CoreUI を確実に表示可能な状態へ整形・検証するため、以下の Tool を共通で提供する。
+
+- `view_format`
+  - 入力: `documentJSON`（文字列）
+  - 役割: `schema`, `ui.body`, semantic node, `actions` を正規化し、表示可能な JSON に整形する
+- `view_validate`
+  - 入力: `documentJSON`（文字列）
+  - 役割: CoreUI JSON 契約への適合性を検証し、問題箇所を `path + reason` で返す
+
+実行ポリシー:
+
+- LLM が UI を返す場合は `view_validate` を必ず通す。
+- 検証失敗時は `view_format` を 1 回適用し、再度 `view_validate` を実行する。
+- なお不正な node は `system.error` View へフォールバックする。
 
 ## 4. 複合ユースケース仕様（Tool + Generable）
 

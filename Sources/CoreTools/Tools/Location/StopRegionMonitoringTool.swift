@@ -2,7 +2,14 @@ import CoreLocation
 
 public struct StopRegionMonitoringTool: Tool {
     public let name = "location_stop_region_monitoring"
-    public let description = "Stop monitoring a geographic region"
+    public let description = """
+        Stop monitoring a geographic region by its identifier.
+
+        Usage:
+        - Provide the identifier used when the region was registered with location_start_region_monitoring
+        - The consent parameter MUST be true
+        - The call will FAIL if the identifier does not match any monitored region
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -30,4 +37,8 @@ public struct StopRegionMonitoringTool: Tool {
             message: "Region monitoring stopped for '\(arguments.identifier)'"
         )
     }
+}
+
+extension StopRegionMonitoringTool: ToolIconProviding {
+    public var iconSystemName: String { "location.fill" }
 }

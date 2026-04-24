@@ -3,7 +3,18 @@ import Foundation
 
 public struct EstimateETATool: Tool {
     public let name = "map_estimate_eta"
-    public let description = "Estimate the travel time and arrival time between two locations"
+    public let description = """
+        Estimate the travel time and distance between two locations.
+
+        ALWAYS call this tool when the user asks how long it takes to get somewhere or the distance between two places.
+
+        Usage:
+        - Provide origin and destination as latitude/longitude coordinate pairs
+        - Specify transportType: "automobile", "walking", or "transit"
+        - Returns travel time in seconds, distance in meters, and estimated arrival time in ISO 8601 format
+        - This is faster than map_calculate_route when you only need time and distance without directions
+        - Use location_geocode to convert addresses to coordinates before calling this tool
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -59,4 +70,8 @@ public struct EstimateETATool: Tool {
         }
         return "\(minutes) min"
     }
+}
+
+extension EstimateETATool: ToolIconProviding {
+    public var iconSystemName: String { "map.fill" }
 }

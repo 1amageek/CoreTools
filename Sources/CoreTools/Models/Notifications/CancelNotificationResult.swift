@@ -1,6 +1,6 @@
 
 @Generable
-public struct CancelNotificationResult: Sendable {
+public struct CancelNotificationResult: Sendable, PromptRepresentable {
     @Guide(description: "Identifiers of cancelled notifications")
     public var cancelledIdentifiers: [String]
 

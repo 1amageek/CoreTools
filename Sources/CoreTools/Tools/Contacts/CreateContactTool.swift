@@ -1,7 +1,18 @@
 
 public struct CreateContactTool: Tool {
     public let name = "contacts_create"
-    public let description = "Create a new contact"
+    public let description = """
+        Create a new contact in the user's address book.
+
+        IMPORTANT: This tool writes to the user's real contact store. The consent parameter MUST be true.
+
+        Usage:
+        - Provide givenName and familyName as required fields
+        - Phone numbers and email addresses are provided as string arrays
+        - Returns the identifier of the newly created contact
+        - ALWAYS confirm with the user before creating a contact
+        - Use contacts_search first to check if the contact already exists
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -45,4 +56,8 @@ public struct CreateContactTool: Tool {
             message: "Contact '\(arguments.givenName) \(arguments.familyName)' created"
         )
     }
+}
+
+extension CreateContactTool: ToolIconProviding {
+    public var iconSystemName: String { "person.crop.circle.fill" }
 }

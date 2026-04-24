@@ -24,7 +24,7 @@ public struct ImagePreviewView: View {
                 if let title = payload.title {
                     Text(title)
                         .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                         .lineLimit(2)
                 }
 
@@ -49,7 +49,7 @@ public struct ImagePreviewView: View {
             Spacer()
             WatchChip(text: "確認")
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
     }
 
     private var metadataGrid: some View {
@@ -65,7 +65,7 @@ public struct ImagePreviewView: View {
                         Text(value)
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .lineLimit(2)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, LayoutTokens.tiny)
@@ -107,7 +107,7 @@ public struct ImagePreviewView: View {
     private var placeholder: some View {
         ZStack {
             Rectangle()
-                .fill(Color.white.opacity(0.06))
+                .fill(WatchPalette.elevated)
             Image(systemName: payload.placeholder ?? "photo")
                 .font(.system(size: 38, weight: .medium))
                 .foregroundStyle(WatchPalette.secondaryText)

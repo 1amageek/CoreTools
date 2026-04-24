@@ -1,6 +1,6 @@
 
 @Generable
-public struct RouteResult: Sendable {
+public struct RouteResult: Sendable, PromptRepresentable {
     @Guide(description: "Turn-by-turn route steps")
     public var steps: [RouteStep]
 

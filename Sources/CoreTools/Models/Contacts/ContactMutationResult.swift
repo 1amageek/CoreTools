@@ -1,6 +1,6 @@
 
 @Generable
-public struct ContactMutationResult: Sendable {
+public struct ContactMutationResult: Sendable, PromptRepresentable {
     @Guide(description: "Identifier of the created or updated contact")
     public var identifier: String
 

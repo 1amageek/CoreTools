@@ -1,6 +1,6 @@
 
 @Generable
-public struct PendingNotificationList: Sendable {
+public struct PendingNotificationList: Sendable, PromptRepresentable {
     @Guide(description: "List of pending notifications")
     public var items: [PendingNotificationItem]
 

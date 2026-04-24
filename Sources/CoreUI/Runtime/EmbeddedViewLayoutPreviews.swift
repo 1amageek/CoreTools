@@ -8,8 +8,9 @@ private enum LayoutPreviewDependencies {
 private enum LayoutPreviewFixtures {
     static let mapView = CoreUIViewItem(
         id: "view-map",
-        kind: .map,
-        payload: .mapSnapshot(
+        type: .mapSnapshot,
+        state: .content,
+        data: .mapSnapshot(
             MapSnapshotPayload(
                 center: CoordinatePayload(latitude: 35.681236, longitude: 139.767125),
                 annotations: [
@@ -41,8 +42,9 @@ private enum LayoutPreviewFixtures {
 
     static let calendarView = CoreUIViewItem(
         id: "view-calendar",
-        kind: .calendar,
-        payload: .calendarTimeline(
+        type: .calendarTimeline,
+        state: .content,
+        data: .calendarTimeline(
             CalendarTimelinePayload(
                 timezone: "Asia/Tokyo",
                 events: [
@@ -68,32 +70,35 @@ private enum LayoutPreviewFixtures {
             )
         ),
         actions: [
-            CoreUIAction(label: "母に送る", type: .tool, name: "share_location")
+            CoreUIAction(
+                type: .invoke,
+                label: "母に送る",
+                target: CoreUIActionTarget(kind: "tool", name: "share_location")
+            )
         ]
     )
 
-    static func document(layout: CoreUILayout) -> CoreUIDocument {
-        CoreUIDocument(
-            schemaVersion: "1.1",
+    static func document(horizontal: Bool) -> CoreUIDocument {
+        let body: CoreUINode = horizontal
+            ? .hstack(CoreUIStack(spacing: .compact, content: [.view(mapView), .view(calendarView)]))
+            : .vstack(CoreUIStack(spacing: .compact, content: [.view(mapView), .view(calendarView)]))
+
+        return CoreUIDocument(
             message: "16:40の通院に間に合うよう、現在地と予定を表示します。",
-            ui: CoreUIDocumentUI(
-                layout: layout,
-                views: [mapView, calendarView],
-                actions: []
-            )
+            ui: CoreUIDocumentUI(body: body)
         )
     }
 }
 
 private struct EmbeddedViewLayoutPreview: View {
-    let layout: CoreUILayout
+    let horizontal: Bool
 
     var body: some View {
         EmbeddedView(
-            model: EmbeddedViewModel(document: LayoutPreviewFixtures.document(layout: layout)),
+            model: EmbeddedViewModel(document: LayoutPreviewFixtures.document(horizontal: horizontal)),
             actionHandler: LayoutPreviewDependencies.actionHandler,
             presentationDriver: LayoutPreviewDependencies.presentationDriver,
-            containerID: "preview-\(layout.rawValue)"
+            containerID: horizontal ? "preview-hstack" : "preview-vstack"
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
@@ -101,9 +106,9 @@ private struct EmbeddedViewLayoutPreview: View {
 }
 
 #Preview("EmbeddedView Layout v") {
-    EmbeddedViewLayoutPreview(layout: .vertical)
+    EmbeddedViewLayoutPreview(horizontal: false)
 }
 
 #Preview("EmbeddedView Layout h") {
-    EmbeddedViewLayoutPreview(layout: .horizontal)
+    EmbeddedViewLayoutPreview(horizontal: true)
 }

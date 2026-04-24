@@ -35,7 +35,7 @@ public struct HealthTrendView: View {
                     .padding(.top, 2)
                 }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -91,7 +91,7 @@ public struct HealthTrendView: View {
             .chartYAxis(.hidden)
             .chartPlotStyle { plotArea in
                 plotArea
-                    .background(Color.white.opacity(0.03))
+                    .background(WatchPalette.elevated.opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: LayoutTokens.chipRadius))
             }
             .frame(height: 42)

@@ -10,20 +10,70 @@ public enum SchemaError: Error, Equatable {
 }
 
 private struct RawDocument: Decodable {
-    let schemaVersion: String
+    let schema: String
     let message: String
+    let context: CoreUIDocumentContext?
     let ui: RawUI?
 }
 
 private struct RawUI: Decodable {
-    let layout: CoreUILayout?
-    let views: [RawView]
-    let actions: [CoreUIAction]?
+    let body: RawNode
+}
+
+private indirect enum RawNode: Decodable {
+    case vstack(RawStack)
+    case hstack(RawStack)
+    case section(RawSection)
+    case view(RawView)
+
+    private enum CodingKeys: String, CodingKey {
+        case vstack
+        case hstack
+        case section
+        case view
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let presentKeys = container.allKeys
+
+        guard presentKeys.count == 1 else {
+            throw DecodingError.dataCorrupted(
+                .init(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "CoreUI node must contain exactly one of vstack, hstack, section, or view"
+                )
+            )
+        }
+
+        if container.contains(.vstack) {
+            self = .vstack(try container.decode(RawStack.self, forKey: .vstack))
+        } else if container.contains(.hstack) {
+            self = .hstack(try container.decode(RawStack.self, forKey: .hstack))
+        } else if container.contains(.section) {
+            self = .section(try container.decode(RawSection.self, forKey: .section))
+        } else {
+            self = .view(try container.decode(RawView.self, forKey: .view))
+        }
+    }
+}
+
+private struct RawStack: Decodable {
+    let spacing: CoreUISpacing?
+    let content: [RawNode]
+}
+
+private struct RawSection: Decodable {
+    let title: String
+    let subtitle: String?
+    let content: [RawNode]
 }
 
 private struct RawView: Decodable {
-    let kind: String
-    let payload: JSONValue
+    let id: String
+    let type: String
+    let state: CoreUIViewState
+    let data: JSONValue
     let actions: [CoreUIAction]?
 }
 
@@ -43,68 +93,32 @@ public struct SchemaDecoder {
         do {
             raw = try decoder.decode(RawDocument.self, from: data)
         } catch {
+            #if DEBUG
+            print("[SchemaDecoder] RawDocument decode error: \(error)")
+            #endif
             throw SchemaError.invalidDocument
         }
 
-        guard raw.schemaVersion == "1.1" else {
-            throw SchemaError.unsupportedSchemaVersion(raw.schemaVersion)
+        guard raw.schema == "coreui/1" else {
+            throw SchemaError.unsupportedSchemaVersion(raw.schema)
         }
 
         guard let rawUI = raw.ui else {
-            return CoreUIDocument(schemaVersion: raw.schemaVersion, message: raw.message, ui: nil)
-        }
-
-        var renderedViews: [CoreUIViewItem] = []
-
-        for (index, rawView) in rawUI.views.enumerated() {
-            let payloadData: Data
-            do {
-                payloadData = try encoder.encode(rawView.payload)
-            } catch {
-                let fallback = CoreUIViewItem(
-                    id: "view-\(index)",
-                    kind: .schemaError,
-                    payload: .schemaError(SchemaErrorPayload(reason: "payload serialization failed")),
-                    actions: rawView.actions ?? []
-                )
-                renderedViews.append(fallback)
-                continue
-            }
-
-            let kind = CoreUIViewKind(rawValue: rawView.kind)
-
-            let decodedPayload: DecodedEmbeddedPayload
-            if let kind {
-                do {
-                    decodedPayload = try decodePayload(kind: kind, payloadData: payloadData)
-                } catch {
-                    decodedPayload = .schemaError(
-                        SchemaErrorPayload(reason: "payload decode failed: \(error)")
-                    )
-                }
-            } else {
-                decodedPayload = .schemaError(
-                    SchemaErrorPayload(reason: "unsupported kind: \(rawView.kind)")
-                )
-            }
-
-            renderedViews.append(
-                CoreUIViewItem(
-                    id: "view-\(index)",
-                    kind: kind ?? .schemaError,
-                    payload: decodedPayload,
-                    actions: rawView.actions ?? []
-                )
+            return CoreUIDocument(
+                schema: raw.schema,
+                message: raw.message,
+                context: raw.context,
+                ui: nil
             )
         }
 
-        let ui = CoreUIDocumentUI(
-            layout: rawUI.layout ?? .vertical,
-            views: renderedViews,
-            actions: rawUI.actions ?? []
+        let ui = CoreUIDocumentUI(body: decodeNode(rawUI.body))
+        return CoreUIDocument(
+            schema: raw.schema,
+            message: raw.message,
+            context: raw.context,
+            ui: ui
         )
-
-        return CoreUIDocument(schemaVersion: raw.schemaVersion, message: raw.message, ui: ui)
     }
 
     public func decodeHeader(from headerJSON: String) throws -> EmbeddedViewHeader {
@@ -128,46 +142,114 @@ public struct SchemaDecoder {
         payloadJSON: String
     ) throws -> DecodedEmbeddedPayload {
         let payloadData = Data(payloadJSON.utf8)
-        return try decodePayload(kindString: embeddedViewType, payloadData: payloadData)
+        return try decodePayload(typeString: embeddedViewType, payloadData: payloadData)
     }
 
-    private func decodePayload(kind: CoreUIViewKind, payloadData: Data) throws -> DecodedEmbeddedPayload {
-        return try decodePayload(kindString: kind.rawValue, payloadData: payloadData)
+    private func decodeNode(_ raw: RawNode) -> CoreUINode {
+        switch raw {
+        case .vstack(let stack):
+            return .vstack(
+                CoreUIStack(
+                    spacing: stack.spacing,
+                    content: stack.content.map { decodeNode($0) }
+                )
+            )
+        case .hstack(let stack):
+            return .hstack(
+                CoreUIStack(
+                    spacing: stack.spacing,
+                    content: stack.content.map { decodeNode($0) }
+                )
+            )
+        case .section(let section):
+            return .section(
+                CoreUISection(
+                    title: section.title,
+                    subtitle: section.subtitle,
+                    content: section.content.map { decodeNode($0) }
+                )
+            )
+        case .view(let view):
+            return .view(decodeView(view))
+        }
     }
 
-    private func decodePayload(kindString: String, payloadData: Data) throws -> DecodedEmbeddedPayload {
+    private func decodeView(_ raw: RawView) -> CoreUIViewItem {
+        let payloadData: Data
         do {
-            switch kindString {
-            case "map", EmbeddedViewType.mapSnapshot.rawValue, EmbeddedViewType.mapRoute.rawValue:
-                do {
-                    let payload = try self.decoder.decode(MapRoutePayload.self, from: payloadData)
-                    return .mapRoute(payload)
-                } catch {
-                    let payload = try self.decoder.decode(MapSnapshotPayload.self, from: payloadData)
-                    return .mapSnapshot(payload)
-                }
-            case "image", EmbeddedViewType.imagePreview.rawValue:
+            payloadData = try encoder.encode(raw.data)
+        } catch {
+            return schemaErrorView(id: raw.id, reason: "data serialization failed")
+        }
+
+        guard let type = CoreUIViewType(rawValue: raw.type) else {
+            return schemaErrorView(id: raw.id, reason: "unsupported type: \(raw.type)")
+        }
+
+        do {
+            return CoreUIViewItem(
+                id: raw.id,
+                type: type,
+                state: raw.state,
+                data: try decodePayload(type: type, payloadData: payloadData),
+                actions: raw.actions ?? []
+            )
+        } catch {
+            return schemaErrorView(id: raw.id, reason: "data decode failed: \(error)")
+        }
+    }
+
+    private func schemaErrorView(id: String, reason: String) -> CoreUIViewItem {
+        CoreUIViewItem(
+            id: id,
+            type: .systemError,
+            state: .error,
+            data: .schemaError(SchemaErrorPayload(reason: reason)),
+            actions: []
+        )
+    }
+
+    private func decodePayload(type: CoreUIViewType, payloadData: Data) throws -> DecodedEmbeddedPayload {
+        try decodePayload(typeString: type.rawValue, payloadData: payloadData)
+    }
+
+    private func decodePayload(typeString: String, payloadData: Data) throws -> DecodedEmbeddedPayload {
+        do {
+            switch typeString {
+            case CoreUIViewType.mapSnapshot.rawValue, EmbeddedViewType.mapSnapshot.rawValue:
+                let payload = try self.decoder.decode(MapSnapshotPayload.self, from: payloadData)
+                return .mapSnapshot(payload)
+            case CoreUIViewType.mapRoute.rawValue, EmbeddedViewType.mapRoute.rawValue:
+                let payload = try self.decoder.decode(MapRoutePayload.self, from: payloadData)
+                return .mapRoute(payload)
+            case CoreUIViewType.imagePreview.rawValue, EmbeddedViewType.imagePreview.rawValue:
                 let payload = try self.decoder.decode(ImagePreviewPayload.self, from: payloadData)
                 return .imagePreview(payload)
-            case "calendar", EmbeddedViewType.calendarTimeline.rawValue:
+            case CoreUIViewType.imageGallery.rawValue, EmbeddedViewType.imageGallery.rawValue:
+                let payload = try self.decoder.decode(ImageGalleryPayload.self, from: payloadData)
+                return .imageGallery(payload)
+            case CoreUIViewType.calendarTimeline.rawValue, EmbeddedViewType.calendarTimeline.rawValue:
                 let payload = try self.decoder.decode(CalendarTimelinePayload.self, from: payloadData)
                 return .calendarTimeline(payload)
-            case "health", EmbeddedViewType.healthTrend.rawValue:
+            case CoreUIViewType.healthTrend.rawValue, EmbeddedViewType.healthTrend.rawValue:
                 let payload = try self.decoder.decode(HealthTrendPayload.self, from: payloadData)
                 return .healthTrend(payload)
-            case "loading", EmbeddedViewType.loadingState.rawValue:
+            case CoreUIViewType.placesList.rawValue, EmbeddedViewType.placeList.rawValue:
+                let payload = try self.decoder.decode(PlaceListPayload.self, from: payloadData)
+                return .placeList(payload)
+            case CoreUIViewType.systemLoading.rawValue, EmbeddedViewType.loadingState.rawValue:
                 let payload = try self.decoder.decode(LoadingStatePayload.self, from: payloadData)
                 return .loadingState(payload)
-            case "schema_error", EmbeddedViewType.schemaError.rawValue:
+            case CoreUIViewType.systemError.rawValue, EmbeddedViewType.schemaError.rawValue:
                 let payload = try self.decoder.decode(SchemaErrorPayload.self, from: payloadData)
                 return .schemaError(payload)
             default:
-                throw SchemaError.unsupportedViewType(kindString)
+                throw SchemaError.unsupportedViewType(typeString)
             }
         } catch let error as SchemaError {
             throw error
         } catch {
-            throw SchemaError.invalidPayload(kindString)
+            throw SchemaError.invalidPayload(typeString)
         }
     }
 }

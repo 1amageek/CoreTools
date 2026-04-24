@@ -19,7 +19,7 @@ public struct LoadingStateView: View {
 
                     Text(payload.message)
                         .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                         .lineLimit(2)
                 }
             }

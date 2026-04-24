@@ -1,6 +1,6 @@
 
 @Generable
-public struct LocationResult: Sendable {
+public struct LocationResult: Sendable, PromptRepresentable {
     @Guide(description: "The coordinate of the current location")
     public var coordinate: Coordinate
 

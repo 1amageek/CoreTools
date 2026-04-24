@@ -1,7 +1,19 @@
 
 public struct ScheduleTimeNotificationTool: Tool {
     public let name = "notification_schedule_time"
-    public let description = "Schedule a notification to fire after a time interval"
+    public let description = """
+        Schedule a notification to fire after a time interval.
+
+        ALWAYS call this tool when the user asks to be reminded after a delay (e.g., "in 5 minutes", "in 1 hour").
+
+        Usage:
+        - Specify timeInterval in seconds (1 to 86,400 = 24 hours)
+        - Set repeats to true for recurring notifications at the same interval
+        - The identifier must be unique; reusing an identifier replaces the existing notification
+        - The consent parameter MUST be true
+        - For scheduling at a specific date and time, use notification_schedule_calendar instead
+        - Use notification_list_pending to verify the notification was scheduled
+        """
 
     @Generable
     public struct Arguments: Sendable {
@@ -48,4 +60,8 @@ public struct ScheduleTimeNotificationTool: Tool {
             message: "Notification '\(arguments.title)' scheduled"
         )
     }
+}
+
+extension ScheduleTimeNotificationTool: ToolIconProviding {
+    public var iconSystemName: String { "bell.fill" }
 }

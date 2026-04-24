@@ -18,7 +18,7 @@ public struct SchemaErrorView: View {
 
                 Text(payload.reason)
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .lineLimit(4)
                     .textSelection(.enabled)
             }

@@ -1,10 +1,17 @@
 import SwiftUI
 
 enum WatchPalette {
-    static let surface = Color.black.opacity(0.88)
-    static let elevated = Color.white.opacity(0.08)
-    static let outline = Color.white.opacity(0.14)
-    static let secondaryText = Color.white.opacity(0.68)
+    #if canImport(UIKit)
+    static let surface = Color(uiColor: .secondarySystemGroupedBackground)
+    static let elevated = Color(uiColor: .tertiarySystemGroupedBackground)
+    static let outline = Color(uiColor: .separator)
+    static let secondaryText = Color(uiColor: .secondaryLabel)
+    #else
+    static let surface = Color(nsColor: .controlBackgroundColor)
+    static let elevated = Color(nsColor: .unemphasizedSelectedContentBackgroundColor)
+    static let outline = Color(nsColor: .separatorColor)
+    static let secondaryText = Color(nsColor: .secondaryLabelColor)
+    #endif
     static let accent = Color.orange
     static let warning = Color.red
 }

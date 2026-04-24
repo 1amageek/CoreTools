@@ -1,6 +1,6 @@
 
 @Generable
-public struct ContactSearchResult: Sendable {
+public struct ContactSearchResult: Sendable, PromptRepresentable {
     @Guide(description: "List of matching contacts")
     public var contacts: [ContactSummary]
 
