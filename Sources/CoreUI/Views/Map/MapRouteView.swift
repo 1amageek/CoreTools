@@ -98,22 +98,10 @@ public struct MapRouteView: View {
             VStack(alignment: .leading, spacing: LayoutTokens.compact) {
                 header
 
-                Map(initialPosition: .region(region)) {
-                    if routeCoordinates.count > 1 {
-                        MapPolyline(coordinates: routeCoordinates)
-                            .stroke(WatchPalette.accent, lineWidth: 4)
-                    }
-
-                    ForEach(allAnnotations, id: \.id) { annotation in
-                        Marker(
-                            annotation.title,
-                            coordinate: CLLocationCoordinate2D(
-                                latitude: annotation.coordinate.latitude,
-                                longitude: annotation.coordinate.longitude
-                            )
-                        )
-                    }
-                }
+                MapRoutePlaceholder(
+                    routeCoordinateCount: routeCoordinates.count,
+                    annotations: allAnnotations
+                )
                 .frame(maxWidth: .infinity)
                 .aspectRatio(1.2, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: LayoutTokens.cornerRadius))
@@ -168,6 +156,41 @@ public struct MapRouteView: View {
                 .monospacedDigit()
                 .foregroundStyle(WatchPalette.accent)
         }
+    }
+}
+
+private struct MapRoutePlaceholder: View {
+    let routeCoordinateCount: Int
+    let annotations: [MapAnnotationPayload]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: LayoutTokens.compact) {
+            HStack(spacing: LayoutTokens.compact) {
+                Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(WatchPalette.accent)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(routeCoordinateCount) route points")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    Text("\(annotations.count) annotations")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(WatchPalette.secondaryText)
+                }
+
+                Spacer()
+            }
+
+            ForEach(annotations.prefix(2), id: \.id) { annotation in
+                Label(annotation.title, systemImage: "mappin.circle.fill")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(WatchPalette.secondaryText)
+                    .lineLimit(1)
+            }
+        }
+        .padding(LayoutTokens.regular)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(WatchPalette.elevated)
     }
 }
 

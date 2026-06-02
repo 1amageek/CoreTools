@@ -134,12 +134,7 @@ private struct PlaceDetailSheet: View {
         List {
             if let coordinate {
                 Section {
-                    Map(initialPosition: .region(MKCoordinateRegion(
-                        center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                    ))) {
-                        Marker(place.name, coordinate: coordinate)
-                    }
+                    PlaceMapPlaceholder(placeName: place.name, coordinate: coordinate)
                     .frame(height: 200)
                     .listRowInsets(EdgeInsets())
                 }
@@ -193,6 +188,36 @@ private struct PlaceDetailSheet: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+}
+
+private struct PlaceMapPlaceholder: View {
+    let placeName: String
+    let coordinate: CLLocationCoordinate2D
+
+    private var coordinateText: String {
+        String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: LayoutTokens.compact) {
+            Image(systemName: "mappin.and.ellipse")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(WatchPalette.accent)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(placeName)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                Text(coordinateText)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(WatchPalette.secondaryText)
+            }
+        }
+        .padding(LayoutTokens.regular)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(WatchPalette.elevated)
     }
 }
 

@@ -44,37 +44,7 @@ public struct MapSnapshotView: View {
             VStack(alignment: .leading, spacing: LayoutTokens.compact) {
                 header
 
-                Map(initialPosition: .region(region)) {
-                    ForEach(payload.annotations) { annotation in
-                        Marker(
-                            annotation.title,
-                            coordinate: CLLocationCoordinate2D(
-                                latitude: annotation.coordinate.latitude,
-                                longitude: annotation.coordinate.longitude
-                            )
-                        )
-                    }
-
-                    if let geofenceRadiusMeters = payload.geofenceRadiusMeters {
-                        MapCircle(
-                            center: CLLocationCoordinate2D(
-                                latitude: payload.center.latitude,
-                                longitude: payload.center.longitude
-                            ),
-                            radius: geofenceRadiusMeters
-                        )
-                        .foregroundStyle(.orange.opacity(0.16))
-
-                        MapCircle(
-                            center: CLLocationCoordinate2D(
-                                latitude: payload.center.latitude,
-                                longitude: payload.center.longitude
-                            ),
-                            radius: geofenceRadiusMeters
-                        )
-                        .stroke(.orange, lineWidth: 1.5)
-                    }
-                }
+                MapSnapshotPlaceholder(payload: payload)
                 .frame(maxWidth: .infinity)
                 .aspectRatio(1.2, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: LayoutTokens.cornerRadius))
@@ -116,6 +86,46 @@ public struct MapSnapshotView: View {
                 .monospacedDigit()
                 .foregroundStyle(WatchPalette.accent)
         }
+    }
+}
+
+private struct MapSnapshotPlaceholder: View {
+    let payload: MapSnapshotPayload
+
+    private var coordinateText: String {
+        String(
+            format: "%.4f, %.4f",
+            payload.center.latitude,
+            payload.center.longitude
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: LayoutTokens.compact) {
+            HStack(spacing: LayoutTokens.compact) {
+                Image(systemName: "map.fill")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(WatchPalette.accent)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(coordinateText)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                    Text("\(payload.annotations.count) annotations")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(WatchPalette.secondaryText)
+                }
+
+                Spacer()
+            }
+
+            if let geofenceRadiusMeters = payload.geofenceRadiusMeters {
+                WatchChip(text: "Geofence \(Int(geofenceRadiusMeters))m", tint: WatchPalette.accent.opacity(0.18))
+            }
+        }
+        .padding(LayoutTokens.regular)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(WatchPalette.elevated)
     }
 }
 
